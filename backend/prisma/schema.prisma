@@ -1,0 +1,50 @@
+generator client {
+    provider     = "prisma-client-js"
+    moduleFormat = "cjs"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum BotStatus {
+    DISABLED
+    ENABLED
+    PAUSED
+}
+
+model Bot {
+    id          String    @id @default(uuid())
+    name        String
+    description String?
+    status      BotStatus
+    createdAt   DateTime  @map("created_at")
+    workers     Worker[]
+    logs        Log[]
+}
+
+model Worker {
+    id          String   @id @default(uuid())
+    name        String
+    description String?
+    createdAt   DateTime @map("created_at")
+    bot         Bot      @relation(fields: [botId], references: [id])
+    botId       String   @map("bot_id")
+    logs        Log[]
+
+    @@index([botId, createdAt(sort: Desc)])
+}
+
+model Log {
+    id        String   @id @default(uuid())
+    createdAt DateTime @map("created_at")
+    message   String
+    bot       Bot      @relation(fields: [botId], references: [id])
+    botId     String   @map("bot_id")
+    worker    Worker   @relation(fields: [workerId], references: [id])
+    workerId  String   @map("worker_id")
+
+    @@index([botId, createdAt(sort: Desc)])
+    @@index([botId, workerId, createdAt(sort: Desc)])
+    @@index([workerId])
+}
